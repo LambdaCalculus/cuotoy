@@ -1,3 +1,3 @@
 
 udpserver:
-	clang -o udpserver -g -O0  -Wall udpserver.c 
+	clang -o udp -g -O0  -Wall udp.c 
