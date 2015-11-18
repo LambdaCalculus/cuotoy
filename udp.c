@@ -72,15 +72,19 @@ void parse_dns(char *buffer, size_t n) {
     uint16_t qdtype, qdclass;
     qdtype = ntohs(*(uint16_t *)b); b +=2;
     qdclass = ntohs(*(uint16_t *)b); b +=2;
-    printf(" question:%s type:%02X class:%02X offset:%ld\n", domain, qdtype, qdclass, b-buffer);
+    printf(" answer:%s type:%02X class:%02X offset:%ld\n", domain, qdtype, qdclass, b-buffer);
     print_hex(b, n+buffer-b);
     int ttl = ntohs(*(uint32_t *)b); b+=4;
     uint16_t len = ntohs(*(uint16_t *)b); b +=2;
-    uint16_t len2 = ntohs(*(uint16_t *)b); b +=2;
-    printf(" question:%s type:%02X class:%02X offset:%ld\n", domain, qdtype, qdclass, b-buffer);
-    printf("domain:%s ttl:%d len:%d %d %s %ld\n", domain, ttl, len, len2, b+5, b-buffer);
-    print_hex(b, n+buffer-b);
+    uint8_t ip[4];
+    ip[0]=*b; b +=1;
+    ip[1]=*b; b +=1;
+    ip[2]=*b; b +=1;
+    ip[3]=*b; b +=1;
+    printf("ttl:%d len:%d %d:%d:%d:%d %ld\n", ttl, len, ip[0], ip[1], ip[2], ip[3], b-buffer);
   }
+  if(n==b-buffer)
+    printf("success\n");
 }
 
 void print_hex(char *buffer, size_t n) {
@@ -100,7 +104,7 @@ void print_hex(char *buffer, size_t n) {
  */
 void error(char *msg) {
   perror(msg);
-  exit(1);
+  // exit(1);
 }
 
 int main(int argc, char **argv) {
