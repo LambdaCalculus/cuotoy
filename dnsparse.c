@@ -9,6 +9,30 @@
 #include <netdb.h>
 #include "dnsparse.h"
 
+int parse_header(dnsheader *header, char *buffer, size_t n) {
+  dnsheader *buf = (dnsheader *)buffer;
+  header->id = buf->id;
+  header->flags = buf->flags;
+  header->qdcount = ntohs(buf->qdcount);
+  header->ancount = ntohs(buf->ancount);
+  header->nscount = ntohs(buf->nscount);
+  header->arcount = ntohs(buf->arcount);
+
+  uint QR, OPCODE, AA, TC, RD, RA, RCODE;
+  QR      = (header->flags & 0x8000) / 0x8000;
+  OPCODE  = (header->flags & 0x7800) / 0x0800;
+  AA      = (header->flags & 0x0400) / 0x0400;
+  TC      = (header->flags & 0x0200) / 0x0200;
+  RD      = (header->flags & 0x0100) / 0x0100;
+  RA      = (header->flags & 0x0080) / 0x0080;
+  RCODE   = (header->flags & 0x7);
+  printf("Header id:%d, flags:%d, qdcount:%d, ancount:%d, nscount:%d, arcount:%d\n",
+    header->id, header->flags, header->qdcount, header->ancount, header->nscount, header->arcount);
+  printf("Flags:%s, OPCODE:%d, AA:%d, TC:%d, RD:%d, RA:%d, RCODE:%d\n",
+      QR?"RESPONSE":"REQUEST", OPCODE, AA, TC, RD, RA, RCODE);
+  return sizeof(*header);
+}
+
 int parse_label(char *buffer, char *label){
   char *b = buffer;
   uint32_t c = *b++;
@@ -31,18 +55,9 @@ int parse_label(char *buffer, char *label){
 }
 
 void parse_dns(char *buffer, size_t n) {
-  dnsheader *buf = (dnsheader *)buffer;
   dnsheader header;
+  char *b = buffer + parse_header(&header, buffer, n);
   char domain[256];
-  header.id = buf->id;
-  header.flags = buf->flags;
-  header.qdcount = ntohs(buf->qdcount);
-  header.ancount = ntohs(buf->ancount);
-  header.nscount = ntohs(buf->nscount);
-  header.arcount = ntohs(buf->arcount);
-  printf("Header id:%d, flags:%d, qdcount:%d, ancount:%d, nscount:%d, arcount:%d\n",
-    header.id, header.flags, header.qdcount, header.ancount, header.nscount, header.arcount);
-  char *b = buffer + sizeof(dnsheader);
   print_hex(b, n+buffer-b);
   for(int i=0; i<header.qdcount; ++i){
     b += parse_label(b, domain);
